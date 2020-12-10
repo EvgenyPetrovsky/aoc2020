@@ -64,33 +64,31 @@ day10_part2_solution <- function(input) {
   outlet <- 0
   device <- max(input) + max_allowed_diff
   
-  iter <- function(int_input, pos) {
-    int_len <- length(int_input)
-    if (pos > length(int_input)) {
+  
+  iter <- function(int_input, pos, int_len) {
+    if (pos + 2 > int_len) {
       0
     }
     else {
-      nom_diff <- get_diff(int_input, outlet, device)
-      max_nom_diff <- max(nom_diff)
-      is_valid <- 
-        if (pos > 1) 0
-        else int_input %>% get_diff(outlet, device) %>% valid_arrangement() + 0
-      if (max_nom_diff > max_allowed_diff)
-        0
-      else {
-        if (pos + 1 < int_len & all(int_input[pos:(pos+1)] == 1))
-          
-          is_valid + iter(int_input[c(-pos,-pos-1)], 1) + iter(int_input, pos + 1)
-        else 
-          is_valid + iter(int_input, pos + 1)
-      }
+      inc <- if (pos == 1) 1 else 0
+      if (all(int_input[pos:(pos+2)] == c(1,1,3)))
+        inc + 
+        iter(int_input[-c(pos,pos+1)], 1, int_len - 2) + 
+        iter(int_input, pos + 1, int_len)
+      else 
+        inc + iter(int_input, pos + 1, int_len)
     }
   }
-  iter(sort(input), pos = 1)
+  diffs <- sort(input) %>% get_diff(outlet, device)
+  iter(diffs, pos = 1, length(diffs))
 }
 
 test_output_part2 <- 8
 test_result <- day10_part2_solution(test_input)
+print(paste("test result:", test_result, "valid:", test_result == test_output_part2))
+
+test_output_part2 <- 8
+test_result <- day10_part2_solution(test_input_2)
 print(paste("test result:", test_result, "valid:", test_result == test_output_part2))
 
 

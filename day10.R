@@ -62,35 +62,40 @@ print(real_result_part1_1 * real_result_part1_2)
 day10_part2_solution <- function(input) {
   max_allowed_diff <- 3
   outlet <- 0
-  device <- max(input) + max_allowed_diff
-  
-  
-  iter <- function(int_input, pos, int_len) {
-    if (pos + 2 > int_len) {
-      0
-    }
-    else {
-      inc <- if (pos == 1) 1 else 0
-      if (all(int_input[pos:(pos+2)] == c(1,1,3)))
-        inc + 
-        iter(int_input[-c(pos,pos+1)], 1, int_len - 2) + 
-        iter(int_input, pos + 1, int_len)
-      else 
-        inc + iter(int_input, pos + 1, int_len)
+  device <- max(c(outlet, input)) + max_allowed_diff
+  input <- c(outlet, sort(input), device)
+  len <- length(input)
+  i <- 0
+  iter <- function(prev_pos, curr_pos, add_valid) {
+    i <<- i + 1
+    if (curr_pos >= len) {
+      add_valid
+    } else {
+      if (input[curr_pos+1] - input[prev_pos] <= max_allowed_diff)
+        add_valid +
+        # after excluding element we continue analysis from the same position!
+        iter(prev_pos = prev_pos, curr_pos = curr_pos + 1, add_valid = 1) +
+        iter(prev_pos = curr_pos, curr_pos = curr_pos + 1, add_valid = 0)
+      else
+        add_valid + 
+        iter(prev_pos = curr_pos, curr_pos = curr_pos + 1, add_valid = 0)
     }
   }
-  diffs <- sort(input) %>% get_diff(outlet, device)
-  iter(diffs, pos = 1, length(diffs))
+  r <- iter(prev_pos = 1, curr_pos = 2, add_valid = 1)
+  print(paste("number of calls", i))
+  r
 }
 
 test_output_part2 <- 8
 test_result <- day10_part2_solution(test_input)
 print(paste("test result:", test_result, "valid:", test_result == test_output_part2))
 
-test_output_part2 <- 8
+test_output_part2 <- 19208
 test_result <- day10_part2_solution(test_input_2)
 print(paste("test result:", test_result, "valid:", test_result == test_output_part2))
 
+system.time({
+  real_result_part2 <- day10_part2_solution(sort(real_input)[1:52])
+})
 
-real_result_part2 <- day10_part2_solution(real_input)
 print(real_result_part2)

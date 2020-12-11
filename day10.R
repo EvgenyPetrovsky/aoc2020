@@ -94,8 +94,9 @@ test_output_part2 <- 19208
 test_result <- day10_part2_solution(test_input_2)
 print(paste("test result:", test_result, "valid:", test_result == test_output_part2))
 
-system.time({
-  real_result_part2 <- day10_part2_solution(sort(real_input)[1:52])
-})
+# split input at 86 and multiply results for 2 parts
+real_result_part2_1 <- day10_part2_solution(sort(real_input[real_input <= 86]))
+real_result_part2_2 <- day10_part2_solution(sort(real_input[real_input >= 86]))
+format(real_result_part2_1 * real_result_part2_2, scientific = F)
 
 print(real_result_part2)

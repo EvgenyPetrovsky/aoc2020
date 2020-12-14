@@ -65,26 +65,34 @@ print(real_result_part1)
 day13_part2_solution <- function(input, start_time = 0) {
   busses <- input_busses_part2(input)
   num_busses <- length(busses)
-  filter_busses <- busses != 1
-  max_bus_id <- max(busses) %>% as.double()
+  max_bus_id <- max(busses) %>% as.integer()
   max_bus_idx <- which(busses == max_bus_id)[1]
   diff_times <- seq.int(
-    from = -(max_bus_idx-1), 
-    by = 1, 
+    from = -(max_bus_idx-1),
+    by = 1,
     length.out = num_busses)
+
+  filter_busses <- (busses != 1 & busses != max_bus_id)
   busses_filtered <- busses[filter_busses]
   diff_times_filtered <- diff_times[filter_busses]
+
   time_check <- FALSE
-  time <- start_time - (start_time %% max_bus_id)
+  time <- as.double(start_time - (start_time %% max_bus_id))
   i <- 0
+  i_print <- 10
   while (!time_check) {
     i <- i + 1
-    if (log10(i) %% 1 == 0) print(paste("iteration", i))
-    time <- as.double(time + max_bus_id)
-    times <- as.double(time + diff_times_filtered)
-    time_check <- all(times %% busses_filtered == 0)
+    if (i == i_print) {
+      i_print <- i_print * 10
+      print(paste("iteration", i))
+      print(paste("time", time))
+    }
+    time <- (time + max_bus_id)
+    diff_times_filtered <- (diff_times_filtered + max_bus_id) %% busses_filtered
+    time_check <- all(diff_times_filtered == 0)
   }
-  winning_start_time <- time + min(diff_times)
+  winning_start_time <- time - max_bus_idx + 1
+  winning_start_time
 }
 
 test_output_part2 <- 1068781

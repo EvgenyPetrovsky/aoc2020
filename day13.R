@@ -78,6 +78,7 @@ day13_part2_solution <- function(input, start_time = 0) {
 
   time_check <- FALSE
   time <- as.double(start_time - (start_time %% max_bus_id))
+  diff_times_filtered <- as.integer((time + diff_times_filtered)%% busses_filtered)
   i <- 0
   i_print <- 10
   while (!time_check) {
@@ -85,7 +86,7 @@ day13_part2_solution <- function(input, start_time = 0) {
     if (i == i_print) {
       i_print <- i_print * 10
       print(paste("iteration", i))
-      print(paste("time", time))
+      print(paste("time", time, "system time", Sys.time()))
     }
     time <- (time + max_bus_id)
     diff_times_filtered <- (diff_times_filtered + max_bus_id) %% busses_filtered

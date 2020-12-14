@@ -7,79 +7,44 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build project",
+            "label": "Lint",
             "type": "shell",
-            "command": "R",
-            "windows": {
-                "command": "R.exe"
-            },
-            "args": [
-                "-q",
-                "-e",
-                "'devtools::document(quiet = F); devtools::install(quiet = T)'"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "Check project",
-            "type": "shell",
-            "command": "R",
-            "windows": {
-                "command": "R.exe"
-            },
-            "args": [
-                "-q",
-                "-e",
-                "'devtools::check(quiet = F)'"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "Test project",
-            "type": "shell",
-            "command": "R",
-            "windows": {
-                "command": "R.exe"
-            },
-            "args": [
-                "-q",
-                "-e",
-                "'devtools::test(quiet = T)'"
-            ],
+            "command": "R -q -e 'lintr::lint(file = \"${relativeFile}\", cache = TRUE)'",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": {
-                //"owner": "cpp",
-                "fileLocation": ["relative", "${workspaceFolder}/tests/testthat"],
-                "pattern": {
-                    "regexp": "^(.*):(\\d+):(\\d+:)?\\s+(warning|error|failure):\\s+(.*)$",
-                    "file": 1,
-                    "line": 2,
-                    "column": 3,
-                    "severity": 4,
-                    "message": 5
+            "presentation": {
+                "reveal": "never"
+            },
+            "problemMatcher": [
+                {
+                    "owner": "R",
+                    //"fileLocation": ["relative", "${cwd}"],
+                    "fileLocation": "absolute",
+                    "pattern": {
+                        "regexp": "^(.*[^:]):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                },
+                {
+                    "owner": "R",
+                    "fileLocation": "absolute",
+                    "severity": "info",
+                    "pattern": {
+                        "regexp": "^(.*[^:]):(\\d+):(\\d+):\\s+(style):\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
                 }
-            }
-        },
-        {
-            "label": "Import data into project",
-            "type": "shell",
-            "command": "R -q -e 'for (file in dir(\"./data-raw\", full.names = TRUE)) source(file)'",
-            "windows": {
-                "command": "R.exe -q -e 'for (file in dir(''./data-raw'', full.names = TRUE)) source(file)'"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            ]
         }
     ]
 }

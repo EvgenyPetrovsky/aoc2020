@@ -185,32 +185,28 @@ print(format(real_result_part1, scientific = FALSE))
 
 day14_part2_solution <- function(input) {
   init <- list(mask = character(), mem = list())
-  iter <- function(input, state) {
-    if (length(input) == 0) state
-    else {
-      line <- input[1]
-      print(paste(line))
-      new_state <- state
-      instruction_type <- identify_instruction_type(line)
-      if (instruction_type == const_MASK) 
-        new_state$mask <- extract_mask(line)
-      else if (instruction_type == const_ASSIGNMENT) {
-        msk <- state$mask
-        adr <- line %>%
-          extract_assignment_address_number() %>% 
-          apply_mask_to_addess_number(mask = msk) %>%
-          expand_floating_bits()
-        num <- extract_assignment_number(line)
-        new <- adr %>% 
-          Reduce(
-            f = function(z, x) z %>% inset2(x, num), 
-            init = state$mem)
-        new_state$mem <- new
-      }
-      iter(input[-1], new_state)
+  process_line <- function(line, state) {
+    print(paste(line))
+    new_state <- state
+    instruction_type <- identify_instruction_type(line)
+    if (instruction_type == const_MASK) 
+      new_state$mask <- extract_mask(line)
+    else if (instruction_type == const_ASSIGNMENT) {
+      msk <- state$mask
+      adr <- line %>%
+        extract_assignment_address_number() %>% 
+        apply_mask_to_addess_number(mask = msk) %>%
+        expand_floating_bits()
+      num <- extract_assignment_number(line)
+      new <- adr %>% 
+        Reduce(
+          f = function(z, x) z %>% inset2(x, num), 
+          init = state$mem)
+      new_state$mem <- new
     }
+    new_state
   }
-  state <- iter(input, init)
+  state <- input %>% Reduce(f = function(z, x) process_line(x, z), init)
 
   state$mem %>% Reduce(f = sum)
 }

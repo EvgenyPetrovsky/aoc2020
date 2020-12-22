@@ -15,7 +15,60 @@ test_input <- c(
   "aaaabbb"
 )
 
+test_input_2 <- c(
+  "42: 9 14 | 10 1",
+  "9: 14 27 | 1 26",
+  "10: 23 14 | 28 1",
+  "1: \"a\"",
+  #"11: 42 31",
+  "11: 42 31 | 42 11 31",
+  "5: 1 14 | 15 1",
+  "19: 14 1 | 14 14",
+  "12: 24 14 | 19 1",
+  "16: 15 1 | 14 14",
+  "31: 14 17 | 1 13",
+  "6: 14 14 | 1 14",
+  "2: 1 24 | 14 4",
+  "0: 8 11",
+  "13: 14 3 | 1 12",
+  "15: 1 | 14",
+  "17: 14 2 | 1 7",
+  "23: 25 1 | 22 14",
+  "28: 16 1",
+  "4: 1 1",
+  "20: 14 14 | 1 15",
+  "3: 5 14 | 16 1",
+  "27: 1 6 | 14 18",
+  "14: \"b\"",
+  "21: 14 1 | 1 14",
+  "25: 1 1 | 1 14",
+  "22: 14 14",
+  #"8: 42",
+  "8: 42 | 42 8",
+  "26: 14 22 | 1 20",
+  "18: 15 15",
+  "7: 14 5 | 1 21",
+  "24: 14 1",
+  "",
+  "abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa",
+  "bbabbbbaabaabba",
+  "babbbbaabbbbbabbbbbbaabaaabaaa",
+  "aaabbbbbbaaaabaababaabababbabaaabbababababaaa",
+  "bbbbbbbaaaabbbbaaabbabaaa",
+  "bbbababbbbaaaaaaaabbababaaababaabab",
+  "ababaaaaaabaaab",
+  "ababaaaaabbbaba",
+  "baabbaaaabbaaaababbaababb",
+  "abbbbabbbbaaaababbbbbbaaaababb",
+  "aaaaabbaabaaaaababaa",
+  "aaaabbaaaabbaaa",
+  "aaaabbaabbaaaaaaabbbabbbaaabbaabaaa",
+  "babaaabbbaaabaababbaabababaaab",
+  "aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"
+)
+
 real_input <- readLines("./inputs/day19-input.txt")
+real_input_2 <- readLines("./inputs/day19_part2-input.txt")
 
 #- LOGIC ----------------------------------------------------------------------#
 
@@ -62,8 +115,7 @@ parse_rule_line <- function(rule_line) {
 
 #' use rules to generate regex patter, alternatives are |,
 #' all rules are enclosed in parentethes
-generate_regex_pattern <- function(rules) {
-  starting_rule_id <- "0"
+generate_regex_pattern <- function(rules, starting_rule_id = "0") {
   iter <- function(rule_id) {
     rule <- rules[[rule_id]]
     ptn <-
@@ -71,9 +123,19 @@ generate_regex_pattern <- function(rules) {
         rule
       } else {
         rule %>%
-          Map(f = function(x)
-            x %>% Map(f = function(x) iter(x)) %>% Reduce(f = paste0)
-          ) %>%
+          Map(f = function(x) {
+            res <-
+              x %>%
+              Map(f = function(x) {
+                # if rule refers to itself - make a recursion using \g{<group>}
+                if (x == rule_id) paste0("\\g<r", rule_id, ">?")
+                else iter(x)
+              }) %>%
+              Reduce(f = paste0)
+            # if rule contains recursion - define group name for referencing
+            if (rule_id %in% x) paste0("(?<r", rule_id, ">", res, ")")
+            else res
+          }) %>%
           Reduce(f = function(z, x) paste0(z, "|", x))
       }
     paste0("(", ptn, ")")
@@ -81,38 +143,6 @@ generate_regex_pattern <- function(rules) {
   paste0("^", iter(starting_rule_id), "$")
 }
 
-##' returns how many characters of text were matched by rules
-#check_text_using_rules <- function(rules, text, rule_id) {
-#  rule <- rules[[rule_id]]
-#  len_text <- nchar(text)
-#  if (typeof(rule) == "character") {
-#    # if rule is character them simply compare text to character and
-#    # if equal then 1 otherwise 0
-#    if (substring(text, 1, 1) == rule) 1 else 0
-#  } else {
-#    # if rule is a list then check all alternatives (list elements)
-#    # each alternatine may refer to one or many rules
-#    rule %>%
-#      Map(f = function(x) {
-#        n_char_matched <- 0
-#        for (r in x) {
-#          chk_res <- check_text_using_rules(
-#            rules,
-#            substr(text, n_char_matched + 1, 1000),
-#            r)
-#          # leave loop if result is invalid
-#          if (chk_res == 0 ) {
-#            n_char_matched <- 0
-#            break
-#          } else {
-#            n_char_matched <- n_char_matched + chk_res
-#          }
-#        }
-#        n_char_matched
-#      }) %>%
-#      Reduce(f = max, init = 0)
-#  }
-#}
 #- SOLUTION PART 1 ------------------------------------------------------------#
 
 day19_part1_solution <- function(input) {
@@ -134,15 +164,19 @@ print(format(real_result_part1, scientific = FALSE))
 #- SOLUTION PART 2 ------------------------------------------------------------#
 
 day19_part2_solution <- function(input) {
-  NULL
+  rules <- input %>% collect_input_rules() %>% parse_input_rules()
+  messages <- input %>% collect_input_strings()
+  pattern <- generate_regex_pattern(rules)
+  grepl(pattern, messages, perl = TRUE) %>% sum()
 }
 
-test_output_part2 <- -1
-test_result <- day19_part2_solution(test_input)
+#test_output_part2 <- 3
+test_output_part2 <- 12
+test_result <- day19_part2_solution(test_input_2)
 print(paste(
   "test result:", test_result,
   "valid:", test_result == test_output_part2))
 
-real_result_part2 <- day19_part2_solution(real_input)
+real_result_part2 <- day19_part2_solution(real_input_2)
 print(format(real_result_part2, scientific = FALSE))
 

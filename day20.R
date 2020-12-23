@@ -3,18 +3,23 @@ library(magrittr)
 test_input <- c(
 )
 
-real_input <- readLines("./inputs/dayXX-input.txt")
+real_input <- readLines("./inputs/day20-input.txt")
 
 #- LOGIC ----------------------------------------------------------------------#
 
 #' produces list of tiles every element of each is an object with properties
 #'   id: number
 #'   content: [character]
-#'   orientation: 
+#'   orientation:
 #'     flipped: logical
 #'     turned: integer (from 0 to 3, shows rotation by 90 degree counterclockwise)
 parse_input <- function(input) {
-  
+  g <-
+    input %>%
+    Reduce(f = function(z, x) z + (x == ""), init = 1L, accumulate = T) %>%
+    magrittr::extract(-1)
+  f <- input == ""
+  split(input[f], g[f])
 }
 
 ## TILE MODIFIERS
@@ -36,10 +41,10 @@ turn_tile <- function(tile, times) {
 #'  left: [character]
 #'  right: [character]
 tile_borders <- function(tile) {
-  
+
 }
 
-## FIELD 
+## FIELD
 
 #' function adds tile to the given position (c(x,y)) of the field and returns new field including added tile
 #' if tile is occupied then function raises an error
@@ -61,7 +66,7 @@ find_first_tile <- function(???) {
   NULL
 }
 
-#' function takes all free tiles and constraints and returns 
+#' function takes all free tiles and constraints and returns
 #' LIST of tiles with MODIFIED orientation that conform constraints
 find_tile_given_constraints <- function(tiles, constraints) {
   NULL
@@ -69,30 +74,30 @@ find_tile_given_constraints <- function(tiles, constraints) {
 
 #- SOLUTION PART 1 ------------------------------------------------------------#
 
-dayXX_part1_solution <- function(input) {
+day20_part1_solution <- function(input) {
   NULL
 }
 
 test_output_part1 <- -1
-test_result <- dayXX_part1_solution(test_input)
+test_result <- day20_part1_solution(test_input)
 print(paste(
   "test result:", test_result,
   "valid:", test_result == test_output_part1))
 
-real_result_part1 <- dayXX_part1_solution(real_input)
+real_result_part1 <- day20_part1_solution(real_input)
 print(format(real_result_part1, scientific = FALSE))
 
 #- SOLUTION PART 2 ------------------------------------------------------------#
 
-dayXX_part2_solution <- function(input) {
+day20_part2_solution <- function(input) {
   NULL
 }
 
 test_output_part2 <- -1
-test_result <- dayXX_part2_solution(test_input)
+test_result <- day20_part2_solution(test_input)
 print(paste(
   "test result:", test_result,
   "valid:", test_result == test_output_part2))
 
-real_result_part2 <- dayXX_part2_solution(real_input)
+real_result_part2 <- day20_part2_solution(real_input)
 print(format(real_result_part2, scientific = FALSE))

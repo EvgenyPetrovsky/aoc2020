@@ -14,22 +14,49 @@ real_input <- readLines("./inputs/day20-input.txt")
 #'     flipped: logical
 #'     turned: integer (from 0 to 3, shows rotation by 90 degree counterclockwise)
 parse_input <- function(input) {
+  input <- input[input != ""]
   g <-
     input %>%
-    Reduce(f = function(z, x) z + (x == ""), init = 1L, accumulate = T) %>%
+    Reduce(f = function(z,x) {
+      z + grepl("^Tile \\d+:$", x)
+    }, accumulate = T, init = 0) %>%
     magrittr::extract(-1)
-  f <- input == ""
-  split(input[f], g[f])
+  input_split <-
+    input %>%
+    split(g) %>%
+    Map(f = function(x) {
+      first_line <- x[1]
+      tile_content <- x[-1]
+      id <- first_line %>%
+        gregexpr(pattern = "\\d+") %>%
+        regmatches(x = first_line) %>%
+        magrittr::extract2(1) %>%
+        as.integer()
+      content <- {
+        rows <- length(tile_content)
+        cols <- nchar(tile_content[1])
+        tile_content %>%
+          strsplit(split = "") %>%
+          unlist() %>%
+          matrix(rows, cols, byrow = T)
+      }
+      list(id = id, content = content, flipped = FALSE, turned = 0)
+    })
 }
 
 ## TILE MODIFIERS
 
+#' flip rows: 1st row becomes last and last row becomes 1st
 flip_tile <- function(tile) {
-  NULL
+  tile %>%
+    magrittr::inset2("flipped", xor(tile$flipped, TRUE)) %>%
+    magrittr::inset2("content", apply(tile$content, 2, rev))
 }
 
-turn_tile <- function(tile, times) {
-  NULL
+turn_tile <- function(tile) {
+  tile %>%
+    magrittr::inset2("turned", (tile$turned + 1) %% 3) %>%
+    magrittr::inset2("content", t(apply(tile$content, 2, rev)))
 }
 
 ## TILE PROPERTIES
@@ -41,9 +68,16 @@ turn_tile <- function(tile, times) {
 #'  left: [character]
 #'  right: [character]
 tile_borders <- function(tile) {
-
+  content <- tile$content
+  rows <- nrow(content)
+  cols <- ncol(content)
+  list(
+    top = content[1, 1:cols],
+    bottom = content[rows, 1:cols],
+    left = content[1:rows, 1],
+    right = content[cols, 1:rows]
+  )
 }
-
 ## FIELD
 
 #' function adds tile to the given position (c(x,y)) of the field and returns new field including added tile
@@ -52,9 +86,9 @@ add_tile <- function(field, position, tile) {
   NULL
 }
 
-#' functuion that returns constraints in form of tile borders for a given position in the field
+#' function that returns constraints in form of tile borders for a given position in the field
 #' if there are no adjucent tiles on a side then side is not included into result.
-#' for example if position has adjucent tiles only on left and bottom sides, function will return list(left = ..., bottom = ...)
+#' for example if position has adjacent tiles only on left and bottom sides, function will return list(left = ..., bottom = ...)
 field_position_constraints <- function {
   NULL
 }

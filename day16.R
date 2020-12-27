@@ -111,7 +111,7 @@ number_position_for_constraint <- function(constraint, tickets) {
       Map(f = function(x) constraint[(x+1)]) %>%
       Reduce(f = function(z, x) {z & x}) %>%
       which()
-  
+
   #positions[1]
   positions
 }
@@ -150,24 +150,24 @@ day16_part2_solution <- function(input) {
   field_types_map <-
     ticket$constraints %>%
     Map(f = function(x) number_position_for_constraint(x, all_valid_tickets))
-  
-  sorted_fields <- field_types_map %>% 
-    Map(f = length) %>% 
-    unlist %>% 
-    sort() %>% 
+
+  sorted_fields <- field_types_map %>%
+    Map(f = length) %>%
+    unlist %>%
+    sort() %>%
     names()
-  
-  # we need to exclude ambiguous results by starting with field that has only 1 
-  # column and eclude that columns from other fieldss
+
+  # we need to exclude ambiguous results by starting with field that has only 1
+  # column and exclude that columns from other fieldss
   field_positions <- sorted_fields %>%
     Reduce(f = function(z, x) {
       pos <- z[[x]]
       Map(z, f = function(x) {
-        if (all(x == pos)) x 
+        if (all(x == pos)) x
         else x[x != pos]
       })
     }, init = field_types_map)
-  
+
   departure_field_positions <-
     field_positions[grepl(pattern = "departure", names(field_types_map))] %>%
     unlist()

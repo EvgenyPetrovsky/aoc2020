@@ -82,33 +82,37 @@ print(real_result_part1)
 #' continue with inc = lcm(1st) and find number when 2nd el is 2
 #' continue with inc = lcm(1st, 2nd) and find a number when 3rd el is 3, ... until all numbers are in
 
+#' algorithm that finds x such that
+#'   (freqs + x + diffs) %% freqs == 0, for all elements
+crack_that_safe <- function(freqs, diffs, start_x = 0) {
+  len <- length(freqs)
+  freqs_1 <- c(1, freqs)
+  iter <- function(x, pos) {
+    if (pos > len) x
+    else {
+      # numerator and denominator
+      n <- freqs[pos] + diffs[pos] + x
+      d <- freqs[pos]
+      # increment is a least common multiple and i is a number of times it is applied
+      inc <- freqs_1[1:pos] %>% Reduce(f = lcm, init = 1)
+      i <- 0
+      while ((n + inc * i) %% d != 0) {
+        i <- i + 1
+      }
+      iter(x + inc * i, pos + 1)
+    }
+  }
+  x <- iter(x = start_x, pos = 1)
+  x
+}
+
 day13_part2_solution <- function(input, start_time = 0) {
   busses <- input_busses_part2(input)
-  num_busses <- length(busses)
-  max_bus_id <- max(busses) %>% as.integer()
-  max_bus_idx <- which(busses == max_bus_id)[1]
-  diff_times <- seq.int(
-    from = -(max_bus_idx-1),
-    by = 1,
-    length.out = num_busses)
+  diff_times <- seq_along(busses) - 1
+  
+  non_1_freq <- (busses != 1)
 
-  filter_busses <- (busses != 1)
-  busses_filtered <- busses[filter_busses]
-  diff_times_filtered <- diff_times[filter_busses]
-  time <- as.double(start_time - (start_time %% max_bus_id))
-  diff_times_filtered <- as.integer((time + diff_times_filtered) %% busses_filtered)
-  
-  lcm_input <- mapply(
-    FUN = function(x, y) 
-      iterations_to_zero(x, max_bus_id, y), 
-    diff_times_filtered, busses_filtered,
-    SIMPLIFY = T, USE.NAMES = F
-    )
-  
-  iterations_to_all_zero <- Reduce(x = lcm_input, f = lcm)
-  
-  winning_start_time <- time + (iterations_to_all_zero * max_bus_id) - max_bus_idx + 1
-  winning_start_time
+  crack_that_safe(busses[non_1_freq], diff_times[non_1_freq], start_time)
 }
 
 test_output_part2 <- 1068781

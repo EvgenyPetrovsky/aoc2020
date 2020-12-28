@@ -29,17 +29,37 @@ pick_cups <- function(cups, current_pos) {
 #' wasn't just picked up. If at any point in this process the value goes below 
 #' the lowest value on any cup's label, it wraps around to the highest value on 
 #' any cup's label instead.
-find_destination_cup <- function(current_cup, chose_from_cups) {
-  below <- chose_from_cups[chose_from_cups < current_cup]
+find_destination_cup <- function(
+  current_cup, 
+  remaining_cups, 
+  picked_cups = NULL, 
+  min_cup = min(remaining_cups), 
+  max_cup = max(remaining_cups)
+) {
+  if (!is.null(picked_cups)) {
+    candidates <- (current_cup-4):(current_cup-1)
+    cup <- candidates[!candidates %in% picked_cups] %>% max()
+    if (cup <= 0) {
+      candidates <- (max_cup-3):(max_cup)
+      cup <- candidates[!candidates %in% picked_cups] %>% max()
+    } else {
+      cup
+    }
+  } else {
+  below <- remaining_cups[remaining_cups < current_cup]
   if (length(below) > 0) max(below)
-  else max(chose_from_cups)
+  else max(remaining_cups)
+  }
 }
 
 #' The crab places the cups it just picked up so that they are immediately 
 #' clockwise of the destination cup. They keep the same order as when they were 
 #' picked up.
 place_cups <- function(cups_to_place, chose_from_cups, current_cup, destination_cup) {
-  destination_pos <- which(chose_from_cups == destination_cup)
+  destination_pos <- which(tail(chose_from_cups, 100) == destination_cup)
+  destination_pos <- 
+    if (length(destination_pos) == 1) destination_pos
+    else  which(chose_from_cups == destination_cup)
   chose_from_len <- length(chose_from_cups)
   
   cups_before_destination <- chose_from_cups[1:destination_pos]
@@ -57,13 +77,17 @@ place_cups <- function(cups_to_place, chose_from_cups, current_cup, destination_
   new_cups_order
 }
 
-play_round <- function(cups) {
-  cups_len <- length(cups)
-  move_cups <- cups[(const_CURRENT_POS+1):(const_CURRENT_POS+const_MOVE_LEN)]
+play_round <- function(
+  cups, 
+  min_cup = min(cups), 
+  max_cup = max(cups), 
+  cups_len = length(cups)
+) {
+  picked_cups <- cups[(const_CURRENT_POS+1):(const_CURRENT_POS+const_MOVE_LEN)]
   current_cup <- cups[const_CURRENT_POS]
-  chose_from_cups <- cups[(const_CURRENT_POS+const_MOVE_LEN+1):cups_len]
-  destination_cup <- find_destination_cup(current_cup, chose_from_cups)
-  place_cups(cups_to_place = move_cups, chose_from_cups, current_cup, destination_cup)
+  remaining_cups <- cups[(const_CURRENT_POS+const_MOVE_LEN+1):cups_len]
+  destination_cup <- find_destination_cup(current_cup, remaining_cups, picked_cups, min_cup, max_cup)
+  place_cups(picked_cups, remaining_cups, current_cup, destination_cup)
 }
 
 #' extract sequence of cups starting after cup with numer = start_cup 
@@ -79,8 +103,7 @@ extract_answer_sequence <- function(cups, start_cup, number_cups) {
 day23_part1_solution <- function(input, rounds) {
   cups <- input %>% parse_input()
   result <- 1:rounds %>% Reduce(f = function(z, x) play_round(z), init = cups)
-  
-  
+
   result %>% 
     extract_answer_sequence(start_cup = 1, number_cups = length(cups) - 1) %>% 
     paste(collapse = "")
@@ -104,10 +127,9 @@ print(paste("real result:", format(real_result_part1, scientific = FALSE)))
 
 #- SOLUTION PART 2 ------------------------------------------------------------#
 
-day23_part2_solution <- function(input, rounds) {
+day23_part2_solution <- function(input, rounds = 10^7, cups_len = 10^6) {
   cups_input <- input %>% parse_input()
   input_len <- length(cups_input)
-  cups_len <- 10^6
   cups <- c(
     cups_input, 
     seq.int(
@@ -116,13 +138,18 @@ day23_part2_solution <- function(input, rounds) {
       length.out = cups_len - input_len
     )
   )
+  min_cup <- min(cups)
+  max_cup <- max(cups)
   
-  i <- 1
+  i <- 1L; j <- 1L
   result <- cups
   while (i <= rounds) {
-    if(i %% 10^2 == 0) print(paste("Round:", format(i, width = 7), "Time:", Sys.time()))
-    result <- play_round(result)
-    i <- i + 1
+    if(j == 1000L) {
+      print(paste("Round:", format(i, width = 7), "Time:", Sys.time()))
+      j <- 0
+    }
+    result <- play_round(result, min_cup, max_cup, cups_len)
+    i <- i + 1; j <- j + 1
   }
 
   result %>% 
@@ -132,7 +159,7 @@ day23_part2_solution <- function(input, rounds) {
 
 print("-- PART 2 ------------------")
 test_output_part2 <- -1
-test_result <- day23_part2_solution(test_input, 10^4)
+test_result <- day23_part2_solution(test_input, rounds = 3*10^3, cups_len = 10^6)
 print(paste(
   "test result:", test_result,
   "valid:", test_result == test_output_part2))

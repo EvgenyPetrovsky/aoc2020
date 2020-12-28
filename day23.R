@@ -56,10 +56,7 @@ find_destination_cup <- function(
 #' clockwise of the destination cup. They keep the same order as when they were 
 #' picked up.
 place_cups <- function(cups_to_place, chose_from_cups, current_cup, destination_cup) {
-  destination_pos <- which(tail(chose_from_cups, 100) == destination_cup)
-  destination_pos <- 
-    if (length(destination_pos) == 1) destination_pos
-    else  which(chose_from_cups == destination_cup)
+  destination_pos <- which(chose_from_cups == destination_cup)
   chose_from_len <- length(chose_from_cups)
   
   cups_before_destination <- chose_from_cups[1:destination_pos]

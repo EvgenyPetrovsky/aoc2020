@@ -107,8 +107,8 @@ position_to_txt <- function(position) {
 add_on_field <- function(field, position, tile_or_outer) {
   field %>% 
     magrittr::inset2(
-      position_to_text, 
-      tile %>% magrittr::inset2(position = position)
+      position_to_txt(position), 
+      tile_or_outer %>% magrittr::inset2("position", position)
     )
 }
 

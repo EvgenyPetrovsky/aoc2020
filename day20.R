@@ -114,6 +114,20 @@ real_input <- readLines("./inputs/day20-input.txt")
 
 #- LOGIC ----------------------------------------------------------------------#
 
+monster_text <- 
+  c(
+    "                  # ",
+    "#    ##    ##    ###",
+    " #  #  #  #  #  #   " 
+  ) 
+
+parse_monster_text <- function(monster_text) {
+  monster_text %>% 
+  strsplit(split = "") %>%
+  unlist() %>% 
+  matrix(nrow = length(monster_text), byrow = T)
+}
+
 #' produces list of tiles every element of each is an object with properties
 #'   id: number
 #'   content: [character]
@@ -153,18 +167,23 @@ parse_input <- function(input) {
 
 ## TILE MODIFIERS
 
+flip <- function(m) m %>% apply(2, rev)
+turn <- function(m) m %>% apply(2, rev) %>% t()
+
 #' flip rows: 1st row becomes last and last row becomes 1st
 flip_tile <- function(tile) {
   tile %>%
     magrittr::inset2("flipped", xor(tile$flipped, TRUE)) %>%
-    magrittr::inset2("content", apply(tile$content, 2, rev))
+    magrittr::inset2("content", flip(tile$content))
 }
 
 turn_tile <- function(tile) {
   tile %>%
     magrittr::inset2("turned", (tile$turned + 1) %% 4) %>%
-    magrittr::inset2("content", t(apply(tile$content, 2, rev)))
+    magrittr::inset2("content", turn(tile$content))
 }
+
+
 
 ## TILE PROPERTIES
 
@@ -384,13 +403,77 @@ field_as_tile_id_matrix <- function(field) {
   mx
 }
 
-matrix_corners <- function(mx) {
-  cols <- ncol(mx)
-  rows <- nrow(mx)
-  c(mx[1,1], mx[1,cols], mx[rows,1], mx[rows, cols])
+#' compose image using field data 
+field_to_image <- function(field) {
+
+  tile_matrix <- field_as_tile_id_matrix(field)
+
+  extract_tile_content <- function(tile_id) {
+    field %>%
+      Filter(f = function(x) x$type == "tile") %>%
+      Filter(f = function(tile) tile$id == tile_id) %>%
+      magrittr::extract2(1) %>% 
+      magrittr::extract2("content")
+  }
+
+  image_dim <- tile_matrix[1,1] %>% extract_tile_content() %>% dim()
+  
+  1:nrow(tile_matrix) %>% 
+    # extract all images in a field row and combine them into one wide matrix
+    Map(f = function(row) {
+      tile_matrix[row,] %>% 
+        Map(f = extract_tile_content) %>% 
+        Map(f = function(content) {
+          content[2:(image_dim[1] - 1), 2:(image_dim[2] - 1)]
+        }) %>%
+        Reduce(f = cbind)
+    }) %>%
+    # combine list of wide matrices into one tall and wide matrix
+    # but higher number rows must go up!
+    Reduce(f = function(z, x) rbind(x, z))
 }
 
-#'
+#' check whether specific part of image contains monster. frame must be of the 
+#' same size as a monster
+image_frame_contains_monster <- function(image_frame, monster_pattern) {
+  
+  monster_pattern_bool <- monster_pattern == "#"
+  image_frame_bool <- image_frame == "#"
+  
+  # monster pattern should fully present on image
+  all((image_frame_bool & monster_pattern_bool) == monster_pattern_bool)
+}
+
+#' scan image and count monsters
+count_monsters_on_image <- function(image, monster_pattern) {
+  wi <- ncol(image)
+  hi <- nrow(image)
+  wm <- ncol(monster_pattern)
+  hm <- nrow(monster_pattern)
+  
+  z <- 0
+  for (x in 0:(wi-wm)) for (y in 0:(hi-hm)) {
+    image_frame <- image[(y+1):(y+hm), (x+1):(x+wm)]
+    z <- z + image_frame_contains_monster(image_frame, monster_pattern)
+  }
+  z
+}
+
+#' find monsters 
+find_all_monsters <- function(image, monster_pattern) {
+  # check tile with under different angles, flip it, check it again
+  orient_funs <- c(
+    turn, turn, turn,
+    function(x) x %>% turn() %>% flip(),
+    turn, turn, turn
+  )
+  
+  orient_funs %>% 
+    Reduce(f = function(img, fun) fun(img), init = image, accumulate = T) %>%
+    Map(f = function(image) count_monsters_on_image(image, monster_pattern)) %>%
+    Reduce(f = max)
+}
+
 #- SOLUTION PART 1 ------------------------------------------------------------#
 
 day20_part1_solution <- function(input) {
@@ -401,6 +484,12 @@ day20_part1_solution <- function(input) {
   m <- field_as_tile_id_matrix(field)
   print(m)
   
+  matrix_corners <- function(mx) {
+    cols <- ncol(mx)
+    rows <- nrow(mx)
+    c(mx[1,1], mx[1,cols], mx[rows,1], mx[rows, cols])
+  }
+
   m %>% matrix_corners() %>% as.double() %>% prod()
   
 }
@@ -417,10 +506,18 @@ print(format(real_result_part1, scientific = FALSE))
 #- SOLUTION PART 2 ------------------------------------------------------------#
 
 day20_part2_solution <- function(input) {
-  NULL
+  tiles <- input %>% parse_input()
+  field <- empty_field %>% fill_field_with_tiles(tiles)
+
+  image <- field_to_image(field)
+  monster_pattern <- monster_text %>% parse_monster_text()
+
+  monsters_count <- image %>% find_all_monsters(monster_pattern)
+  roughness <- sum(image == "#") - sum(monster_pattern == "#") * monsters_count
+  roughness
 }
 
-test_output_part2 <- -1
+test_output_part2 <- 273
 test_result <- day20_part2_solution(test_input)
 print(paste(
   "test result:", test_result,

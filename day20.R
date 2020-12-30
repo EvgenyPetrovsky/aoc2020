@@ -1,23 +1,113 @@
 library(magrittr)
 
 test_input <- c(
-  "Tile 2311:","..##.#..#.","##..#.....","#...##..#.","####.#...#","##.##.###.","##...#.###",".#.#.#..##","..#....#..","###...#.#.","..###..###",
+  "Tile 2311:",
+  "..##.#..#.",
+  "##..#.....",
+  "#...##..#.",
+  "####.#...#",
+  "##.##.###.",
+  "##...#.###",
+  ".#.#.#..##",
+  "..#....#..",
+  "###...#.#.",
+  "..###..###",
   "",
-  "Tile 1951:","#.##...##.","#.####...#",".....#..##","#...######",".##.#....#",".###.#####","###.##.##.",".###....#.","..#.#..#.#","#...##.#..",
+  "Tile 1951:",
+  "#.##...##.",
+  "#.####...#",
+  ".....#..##",
+  "#...######",
+  ".##.#....#",
+  ".###.#####",
+  "###.##.##.",
+  ".###....#.",
+  "..#.#..#.#",
+  "#...##.#..",
   "",
-  "Tile 1171:","####...##.","#..##.#..#","##.#..#.#.",".###.####.","..###.####",".##....##.",".#...####.","#.##.####.","####..#...",".....##...",
+  "Tile 1171:",
+  "####...##.",
+  "#..##.#..#",
+  "##.#..#.#.",
+  ".###.####.",
+  "..###.####",
+  ".##....##.",
+  ".#...####.",
+  "#.##.####.",
+  "####..#...",
+  ".....##...",
   "",
-  "Tile 1427:","###.##.#..",".#..#.##..",".#.##.#..#","#.#.#.##.#","....#...##","...##..##.","...#.#####",".#.####.#.","..#..###.#","..##.#..#.",
+  "Tile 1427:",
+  "###.##.#..",
+  ".#..#.##..",
+  ".#.##.#..#",
+  "#.#.#.##.#",
+  "....#...##",
+  "...##..##.",
+  "...#.#####",
+  ".#.####.#.",
+  "..#..###.#",
+  "..##.#..#.",
   "",
-  "Tile 1489:","##.#.#....","..##...#..",".##..##...","..#...#...","#####...#.","#..#.#.#.#","...#.#.#..","##.#...##.","..##.##.##","###.##.#..",
+  "Tile 1489:",
+  "##.#.#....",
+  "..##...#..",
+  ".##..##...",
+  "..#...#...",
+  "#####...#.",
+  "#..#.#.#.#",
+  "...#.#.#..",
+  "##.#...##.",
+  "..##.##.##",
+  "###.##.#..",
   "",
-  "Tile 2473:","#....####.","#..#.##...","#.##..#...","######.#.#",".#...#.#.#",".#########",".###.#..#.","########.#","##...##.#.","..###.#.#.",
+  "Tile 2473:",
+  "#....####.",
+  "#..#.##...",
+  "#.##..#...",
+  "######.#.#",
+  ".#...#.#.#",
+  ".#########",
+  ".###.#..#.",
+  "########.#",
+  "##...##.#.",
+  "..###.#.#.",
   "",
-  "Tile 2971:","..#.#....#","#...###...","#.#.###...","##.##..#..",".#####..##",".#..####.#","#..#.#..#.","..####.###","..#.#.###.","...#.#.#.#",
+  "Tile 2971:",
+  "..#.#....#",
+  "#...###...",
+  "#.#.###...",
+  "##.##..#..",
+  ".#####..##",
+  ".#..####.#",
+  "#..#.#..#.",
+  "..####.###",
+  "..#.#.###.",
+  "...#.#.#.#",
   "",
-  "Tile 2729:","...#.#.#.#","####.#....","..#.#.....","....#..#.#",".##..##.#.",".#.####...","####.#.#..","##.####...","##..#.##..","#.##...##.",
+  "Tile 2729:",
+  "...#.#.#.#",
+  "####.#....",
+  "..#.#.....",
+  "....#..#.#",
+  ".##..##.#.",
+  ".#.####...",
+  "####.#.#..",
+  "##.####...",
+  "##..#.##..",
+  "#.##...##.",
   "",
-  "Tile 3079:","#.#.#####.",".#..######","..#.......","######....","####.#..#.",".#...#.##.","#.#####.##","..#.###...","..#.......","..#.###..."
+  "Tile 3079:",
+  "#.#.#####.",
+  ".#..######",
+  "..#.......",
+  "######....",
+  "####.#..#.",
+  ".#...#.##.",
+  "#.#####.##",
+  "..#.###...",
+  "..#.......",
+  "..#.###..."
 )
 
 real_input <- readLines("./inputs/day20-input.txt")
@@ -92,7 +182,7 @@ tile_borders <- function(tile) {
     top = content[1, 1:cols],
     bottom = content[rows, 1:cols],
     left = content[1:rows, 1],
-    right = content[cols, 1:rows]
+    right = content[1:rows, cols]
   )
 }
 ## FIELD
@@ -175,12 +265,15 @@ find_tile_given_constraints <- function(constraints, tiles) {
 
   # check tile with under different angles, flip it, check it again
   orient_funs <- c(
-    # turn tile 4 times to make a full round
-    turn_tile, turn_tile, turn_tile, turn_tile,
-    # flip tile when turn = 0 
-    flip_tile,
-    # turn flipped tile 4 more times
-    turn_tile, turn_tile, turn_tile, turn_tile
+    # turn tile 3 times to make a full round (we will start with angle 0 and 
+    # fold function will accumulate prior results)
+    # so: initial is no-flip & 0 deg, then 90, 180, 270 deg
+    turn_tile, turn_tile, turn_tile,
+    # turn tile to 0 degree angle and flip it 
+    # so: we continue with flip & 0 deg, then 90, 180, 270 deg
+    function(x) x %>% turn_tile() %>% flip_tile(),
+    # turn flipped tile 3 more times
+    turn_tile, turn_tile, turn_tile
   )
 
   tiles_megaset <-
@@ -276,6 +369,27 @@ plot_field <- function(field) {
   plot(x, y, pch = labels)
 }
 
+
+field_as_tile_id_matrix <- function(field) {
+  tile_ids <- 
+    field %>% 
+    Filter(f = function(x) x$type == "tile") %>%
+    Map(f = function(tile) with(tile, list(id = id, x = position[1], y = position[2]))) %>%
+    Reduce(f = rbind, init = data.frame(id = integer(), x = integer(), y = integer()))
+  
+  cols <- max(tile_ids$x) - min(tile_ids$x) + 1
+  rows <- max(tile_ids$y) - min(tile_ids$y) + 1
+  ids <- tile_ids[order(tile_ids$x, tile_ids$y), "id"]
+  mx <- matrix(data = ids, nrow = rows, ncol = cols, byrow = F)
+  mx
+}
+
+matrix_corners <- function(mx) {
+  cols <- ncol(mx)
+  rows <- nrow(mx)
+  c(mx[1,1], mx[1,cols], mx[rows,1], mx[rows, cols])
+}
+
 #'
 #- SOLUTION PART 1 ------------------------------------------------------------#
 
@@ -284,13 +398,14 @@ day20_part1_solution <- function(input) {
 
   field <- empty_field %>% fill_field_with_tiles(tiles)
 
-  field %>%
-    Map(f = function(tile) paste("position:", tile$position, "id:", tile$id)) %>%
-    Map(f = print)
-  NULL
+  m <- field_as_tile_id_matrix(field)
+  print(m)
+  
+  m %>% matrix_corners() %>% as.double() %>% prod()
+  
 }
 
-test_output_part1 <- -1
+test_output_part1 <- 20899048083289
 test_result <- day20_part1_solution(test_input)
 print(paste(
   "test result:", test_result,
